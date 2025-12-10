@@ -6,7 +6,7 @@ import {
   ScatterplotLayer,
   TextLayer,
 } from "@deck.gl/layers";
-import { COLORS, asDeckGLColor } from "../constants/colors";
+import { COLORS, FONT_FAMILY, asDeckGLColor } from "../constants/colors";
 import { OrbitLayerType, getLayerId } from "../constants/layers";
 import type { EditorState, OrbitArea, Point } from "../types";
 import {
@@ -27,6 +27,8 @@ import {
   generateOrbitAreaPolygon,
   normalizeAngle,
 } from "../utils/geo-utils";
+import AlignmentDebugShaderLayer from "./AlignmentDebugShaderLayer";
+import ToolInfoPanel from "./ToolInfoPanel";
 
 // Define props interface for OrbitAreaEditor
 export interface OrbitAreaEditorProps extends CompositeLayerProps {
@@ -49,7 +51,7 @@ const defaultProps = {
   pointColor: COLORS.POINT_COLOR,
   lineColor: COLORS.LINE_COLOR,
   alignmentIndicatorColor: COLORS.ALIGNMENT_INDICATOR_COLOR,
-  debug: true, // Debug mode disabled by default
+  debug: false, // Debug mode disabled by default
 };
 
 export default class OrbitAreaEditor extends CompositeLayer<OrbitAreaEditorProps> {
@@ -62,6 +64,7 @@ export default class OrbitAreaEditor extends CompositeLayer<OrbitAreaEditorProps
   // Internal state for alignment (using private property instead of overriding state)
   private _currentAlignment: OrbitAreaAlignmentEnum =
     OrbitAreaAlignmentEnum.CENTRE;
+
 
   // Initialize alignment state from props if available
   override updateState(params: any) {
@@ -255,6 +258,7 @@ export default class OrbitAreaEditor extends CompositeLayer<OrbitAreaEditorProps
     let polygonLayers: Layer[] = [];
     let lineLayers: Layer[] = [];
     let pointLayers: Layer[] = [];
+    let textLayers: Layer[] = [];
 
     // Placed points layer (first and second point markers)
     if (firstPoint) {
@@ -296,9 +300,8 @@ export default class OrbitAreaEditor extends CompositeLayer<OrbitAreaEditorProps
       const distance = calculateDistance(firstPoint, mousePosition);
       const bearing = calculateBearing(firstPoint, mousePosition);
       const convertedDistance = convertDistance(distance, distanceUnit);
-      const distanceText = `${convertedDistance.toFixed(2)} ${
-        DISTANCE_UNIT_LABELS[distanceUnit]
-      } / ${bearing.toFixed(1)}deg`;
+      const distanceText = `${convertedDistance.toFixed(2)} ${DISTANCE_UNIT_LABELS[distanceUnit]}`;
+      const bearingText = `${bearing.toFixed(1)} °`;
 
       // Line from first point to mouse
       lineLayers.push(
@@ -321,34 +324,17 @@ export default class OrbitAreaEditor extends CompositeLayer<OrbitAreaEditorProps
         })
       );
 
-      // Text label for distance and bearing
-      const midPoint = {
-        longitude: (firstPoint.longitude + mousePosition.longitude) / 2,
-        latitude: (firstPoint.latitude + mousePosition.latitude) / 2,
-      };
-
-      pointLayers.push(
-        new TextLayer({
+      textLayers.push(
+        new ToolInfoPanel({
           id: `${this.props.id}-distance-text`,
-          data: [
-            {
-              position: [midPoint.longitude, midPoint.latitude],
-              text: distanceText,
-            },
+          rows: [
+            { key: "Distance", value: distanceText },
+            { key: "Bearing", value: bearingText }
           ],
-          getPosition: (d) => d.position,
-          getText: (d) => d.text,
-          getColor: asDeckGLColor(COLORS.DEBUG_TEXT_COLOR),
-          getSize: 10,
-          getAngle: 0,
-          getTextAnchor: "middle",
-          getAlignmentBaseline: "center",
-          getPixelOffset: [0, 0],
-          background: true,
-          backgroundPadding: [8, 4],
-          getBackgroundColor: asDeckGLColor(COLORS.DEBUG_BACKGROUND),
-          pickable: false,
-        })
+          position: [mousePosition.longitude, mousePosition.latitude],
+          textColor: asDeckGLColor(COLORS.DEBUG_TEXT_COLOR),
+          backgroundColor: asDeckGLColor(COLORS.DEBUG_BACKGROUND),
+        } as any)
       );
     }
 
@@ -363,9 +349,7 @@ export default class OrbitAreaEditor extends CompositeLayer<OrbitAreaEditorProps
       const radius = calculateDistance(secondPoint, mousePosition);
       const width = radius * 2;
       const convertedWidth = convertDistance(width, distanceUnit);
-      const widthText = `Width: ${convertedWidth.toFixed(2)} ${
-        DISTANCE_UNIT_LABELS[distanceUnit]
-      }`;
+      const widthText = `${convertedWidth.toFixed(2)} ${DISTANCE_UNIT_LABELS[distanceUnit]}`;
 
       // Get the current alignment from our internal state (updated during onHover based on mouse position)
       // This should be dynamically changing as the mouse moves
@@ -430,34 +414,18 @@ export default class OrbitAreaEditor extends CompositeLayer<OrbitAreaEditorProps
         })
       );
 
-      // Text label for width and alignment
-      const midPoint = {
-        longitude: (secondPoint.longitude + mousePosition.longitude) / 2,
-        latitude: (secondPoint.latitude + mousePosition.latitude) / 2,
-      };
-
-      pointLayers.push(
-        new TextLayer({
-          id: `${this.props.id}-width-text`,
-          data: [
-            {
-              position: [midPoint.longitude, midPoint.latitude],
-              text: `${widthText} | Alignment: ${alignmentText}`,
-            },
+      // A-B line info panel
+      textLayers.push(
+        new ToolInfoPanel({
+          id: `${this.props.id}-width-tool`,
+          rows: [
+            { key: "Alignment", value: alignmentText },
+            { key: "Width", value: widthText },
           ],
-          getPosition: (d) => d.position,
-          getText: (d) => d.text,
-          getColor: [255, 255, 255],
-          getSize: 10,
-          getAngle: 0,
-          getTextAnchor: "middle",
-          getAlignmentBaseline: "center",
-          getPixelOffset: [0, 0],
-          background: true,
-          backgroundPadding: [8, 4],
-          getBackgroundColor: [0, 0, 0, 200],
-          pickable: false,
-        })
+          position: [mousePosition.longitude, mousePosition.latitude],
+          textColor: asDeckGLColor(COLORS.DEBUG_TEXT_COLOR),
+          backgroundColor: asDeckGLColor(COLORS.DEBUG_BACKGROUND),
+        } as any)
       );
 
       // Preview OrbitArea polygon with detected alignment
@@ -471,29 +439,10 @@ export default class OrbitAreaEditor extends CompositeLayer<OrbitAreaEditorProps
         effectiveAlignment
       );
 
-      // Use default green if previewColor is undefined
-      const defaultColor: [number, number, number, number] = [0, 255, 255, 120];
-
-      // Create a more transparent fill color
-      const fillColor: [number, number, number, number] = [
-        previewColor?.[0] ?? defaultColor[0],
-        previewColor?.[1] ?? defaultColor[1],
-        previewColor?.[2] ?? defaultColor[2],
-        previewColor?.[3] !== undefined ? previewColor[3] * 0.5 : 60, // Make fill more transparent
-      ];
-
-      // Create a solid outline color
-      const lineColor: [number, number, number, number] = [
-        previewColor?.[0] ?? defaultColor[0],
-        previewColor?.[1] ?? defaultColor[1],
-        previewColor?.[2] ?? defaultColor[2],
-        255, // Fully opaque
-      ];
-
       // Add the filled polygon with semi-transparent fill
       polygonLayers.push(
         new PolygonLayer({
-          id: getLayerId(this.props.id, OrbitLayerType.PREVIEW_POLYGON, "fill"),
+          id: getLayerId(this.props.id, OrbitLayerType.PREVIEW_POLYGON, "area"),
           data: [
             {
               polygon: polygonPoints,
@@ -502,33 +451,10 @@ export default class OrbitAreaEditor extends CompositeLayer<OrbitAreaEditorProps
           getPolygon: (d) =>
             d.polygon.map((p: Point) => [p.longitude, p.latitude]),
           getFillColor: asDeckGLColor(COLORS.ORBIT_AREA_FILL),
-          getLineColor: [0, 0, 0, 0], // No border on the fill
-          getLineWidth: 0,
-          filled: true,
-          stroked: false,
-          pickable: false,
-          parameters: {
-            depthTest: false,
-          },
-        })
-      );
-
-      // Add a solid line around the polygon outline
-      polygonLayers.push(
-        new PolygonLayer({
-          id: `${this.props.id}-preview-outline`,
-          data: [
-            {
-              polygon: polygonPoints,
-            },
-          ],
-          getPolygon: (d) =>
-            d.polygon.map((p: Point) => [p.longitude, p.latitude]),
-          getFillColor: [0, 0, 0, 0], // Transparent fill
           getLineColor: asDeckGLColor(COLORS.ORBIT_AREA_OUTLINE),
           getLineWidth: 2, // Thicker line
           lineWidthUnits: "pixels",
-          filled: false,
+          filled: true,
           stroked: true,
           pickable: false,
           parameters: {
@@ -539,122 +465,29 @@ export default class OrbitAreaEditor extends CompositeLayer<OrbitAreaEditorProps
 
       // Only add debug visualization for the quadrants if debug is enabled
       if (this.props.debug) {
-        // Calculate the quadrant areas around the second point
-        const QUADRANT_RADIUS_METERS = radius * 1.5; // Make quadrants a bit larger than the width
-        const quadrantLayers = ALIGNMENT_QUADRANTS.map((quadrant, index) => {
-          const startAngle = quadrant.minAngle;
-          const endAngle = quadrant.maxAngle;
+        // Use the same radius as the actual orbit area (width / 2)
+        // This ensures the debug overlay matches the center alignment circle exactly
+        const QUADRANT_RADIUS_METERS = radius; // Use the actual radius, not 1.5x
+        
+        // Calculate the main bearing
+        const mainBearing = calculateBearing(firstPoint, secondPoint);
 
-          // Calculate the main bearing
-          const mainBearing = calculateBearing(firstPoint, secondPoint);
-
-          // Calculate quadrant vertices (arc around second point)
-          const vertices: Point[] = [];
-
-          // Start with the center point
-          vertices.push({
-            longitude: secondPoint.longitude,
-            latitude: secondPoint.latitude,
-          });
-
-          // Add points along the arc at 5-degree intervals
-          // Handle the case where we need to go the long way around
-          let adjustedEndAngle = endAngle;
-          if (startAngle > endAngle) {
-            adjustedEndAngle += 360;
-          }
-
-          for (let angle = startAngle; angle <= adjustedEndAngle; angle += 5) {
-            const normalizedAngle = normalizeAngle(angle);
-            const absoluteAngle = normalizeAngle(mainBearing + normalizedAngle);
-            const radians = (absoluteAngle * Math.PI) / 180;
-
-            // Calculate point at this angle and the defined radius
-            const dx = (Math.sin(radians) * QUADRANT_RADIUS_METERS) / 111111; // Convert meters to degrees (approximate)
-            const dy = (Math.cos(radians) * QUADRANT_RADIUS_METERS) / 111111;
-
-            vertices.push({
-              longitude: secondPoint.longitude + dx,
-              latitude: secondPoint.latitude + dy,
-            });
-          }
-
-          // Add one more vertex to close the arc if we're handling the wrap-around case
-          if (startAngle > endAngle) {
-            const absoluteAngle = normalizeAngle(mainBearing + endAngle);
-            const radians = (absoluteAngle * Math.PI) / 180;
-
-            const dx = (Math.sin(radians) * QUADRANT_RADIUS_METERS) / 111111;
-            const dy = (Math.cos(radians) * QUADRANT_RADIUS_METERS) / 111111;
-
-            vertices.push({
-              longitude: secondPoint.longitude + dx,
-              latitude: secondPoint.latitude + dy,
-            });
-          }
-
-          // Close the polygon by duplicating the center point
-          vertices.push({
-            longitude: secondPoint.longitude,
-            latitude: secondPoint.latitude,
-          });
-
-          // Determine color based on quadrant alignment
-          let color: [number, number, number, number] = [0, 255, 0, 80]; // Default green with low opacity
-          switch (quadrant.alignment) {
-            case OrbitAreaAlignmentEnum.LEFT:
-              color = asDeckGLColor(COLORS.LEFT_COLOR || [255, 100, 100, 200]);
-              break;
-            case OrbitAreaAlignmentEnum.RIGHT:
-              color = asDeckGLColor(COLORS.RIGHT_COLOR || [100, 100, 255, 200]);
-              break;
-            case OrbitAreaAlignmentEnum.CENTRE:
-            default:
-              color = asDeckGLColor(
-                COLORS.CENTER_COLOR || [100, 255, 100, 200]
-              );
-              break;
-          }
-
-          // Highlight the active quadrant by making it more visible
-          if (quadrant.alignment === currentAlignment) {
-            color = [color[0], color[1], color[2], 200]; // Increased opacity for active quadrant
-          } else {
-            color = [color[0], color[1], color[2], 80]; // More transparent for inactive quadrants
-          }
-
-          return new PolygonLayer({
-            id: getLayerId(
-              this.props.id,
-              OrbitLayerType.DEBUG_QUADRANTS,
-              `${index}`
-            ),
-            data: [
-              {
-                polygon: vertices,
-                name: quadrant.name,
-              },
-            ],
-            getPolygon: (d) =>
-              d.polygon.map((p: Point) => [p.longitude, p.latitude]),
-            getFillColor: color,
-            getLineColor:
-              quadrant.alignment === currentAlignment
-                ? asDeckGLColor(COLORS.ACTIVE_QUADRANT_COLOR)
-                : asDeckGLColor(COLORS.INACTIVE_QUADRANT_COLOR),
-            getLineWidth: 1,
-            filled: true,
-            stroked: true,
-            pickable: false,
-            parameters: {
-              depthTest: false,
-            },
-          });
+        // Use the new shader layer for accurate quadrant visualization
+        const debugShaderLayer = new AlignmentDebugShaderLayer({
+          id: getLayerId(this.props.id, OrbitLayerType.DEBUG_QUADRANTS, "shader"),
+          center: [secondPoint.longitude, secondPoint.latitude],
+          mainBearing,
+          currentAlignment,
+          radius: QUADRANT_RADIUS_METERS,
+          visible: true,
+          baseId: this.props.id,
         });
 
+        // Get the polygon layers from the shader layer
+        const quadrantLayers = debugShaderLayer.renderLayers();
         layers.push(...quadrantLayers);
 
-        // Add text labels for the quadrants
+        // Add text labels for the quadrants (keeping the existing label logic)
         const labelLayers = ALIGNMENT_QUADRANTS.map((quadrant, index) => {
           const midAngle = (quadrant.minAngle + quadrant.maxAngle) / 2;
           // Handle wrap-around case
@@ -662,9 +495,6 @@ export default class OrbitAreaEditor extends CompositeLayer<OrbitAreaEditorProps
             quadrant.minAngle > quadrant.maxAngle
               ? ((quadrant.minAngle + quadrant.maxAngle + 360) / 2) % 360
               : midAngle;
-
-          // Calculate the main bearing
-          const mainBearing = calculateBearing(firstPoint, secondPoint);
 
           // Calculate the absolute angle for this quadrant
           const absoluteAngle = normalizeAngle(
@@ -696,7 +526,9 @@ export default class OrbitAreaEditor extends CompositeLayer<OrbitAreaEditorProps
             ],
             getPosition: (d) => d.position,
             getText: (d) => d.text,
+            fontFamily: FONT_FAMILY,
             getColor: asDeckGLColor(COLORS.DEBUG_TEXT_COLOR),
+            getBackgroundColor: asDeckGLColor(COLORS.DEBUG_BACKGROUND),
             getSize: 9,
             getAngle: 0,
             getTextAnchor: "middle",
@@ -704,7 +536,6 @@ export default class OrbitAreaEditor extends CompositeLayer<OrbitAreaEditorProps
             getPixelOffset: [0, 0],
             background: true,
             backgroundPadding: [4, 2],
-            getBackgroundColor: asDeckGLColor(COLORS.DEBUG_BACKGROUND),
             pickable: false,
             parameters: {
               depthTest: false,
@@ -726,6 +557,7 @@ export default class OrbitAreaEditor extends CompositeLayer<OrbitAreaEditorProps
       ...lineLayers, // Lines connecting points in the middle
       ...pointLayers, // Points and labels on top
       ...layers, // Any other layers that were directly added
+      ...textLayers, // Text layers on top
     ];
   }
 }

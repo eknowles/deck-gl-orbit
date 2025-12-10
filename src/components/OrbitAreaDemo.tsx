@@ -75,7 +75,6 @@ export const OrbitAreaDemo: React.FC = () => {
       distanceUnit,
       pickable: true,
       autoHighlight: false,
-      debug: false,
       // Pass the callback to handle completed orbit areas
       onOrbitAreaComplete: (orbitArea: OrbitArea) => {
         debug("Orbit area completed in OrbitAreaDemo:", orbitArea);

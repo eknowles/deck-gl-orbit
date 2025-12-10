@@ -14,6 +14,9 @@ export function asDeckGLColor(color: number[] | undefined): DeckGLColor {
   return color as DeckGLColor;
 }
 
+export const FONT_FAMILY = "Arial";
+// export const FONT_FAMILY = "Lucida Console, Monaco, Monospace";
+
 // Main map colors
 export const COLORS: { [key: string]: DeckGLColor } = {
   // Editor colors
