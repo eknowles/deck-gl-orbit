@@ -1,0 +1,34 @@
+# Source files (only dist should be published)
+src/
+demo/
+*.log
+
+# Development files
+.git/
+.gitignore
+.vscode/
+.idea/
+*.test.*
+*.spec.*
+coverage/
+
+# Build artifacts
+demo-dist/
+node_modules/
+bun.lock
+bunfig.toml
+bun-env.d.ts
+
+api-extractor.json
+temp/
+
+# TypeScript config for library builds
+tsconfig.json
+tsconfig.lib.json
+
+# Demo-specific assets
+demo-dist/
+
+docs/
+
+

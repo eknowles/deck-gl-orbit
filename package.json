@@ -1,30 +1,87 @@
 {
-  "name": "bun-react-template",
+  "name": "@eknowles/deck-gl",
   "version": "0.1.0",
-  "private": true,
+  "description": "Deck.GL layer system for interacting with geographic areas for unmanned systems on air, surface, and underwater",
   "type": "module",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./core": "./dist/core.mjs",
+    "./react": "./dist/react.mjs",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "deck.gl",
+    "orbit-area",
+    "geographic",
+    "interactive",
+    "map",
+    "visualization",
+    "editor"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
   "scripts": {
-    "dev": "PORT=3001 bun --hot src/index.tsx",
-    "build": "bun build ./src/index.html --outdir=dist --sourcemap --target=browser --minify --define:process.env.NODE_ENV='\"production\"' --env='BUN_PUBLIC_*'",
-    "start": "NODE_ENV=production bun src/index.tsx"
+    "api": "api-extractor run --local --verbose && api-documenter markdown -i ./temp -o ./docs",
+    "api-extractor": "api-extractor",
+    "dev": "PORT=3001 bun --hot demo/index.tsx",
+    "dev:demo": "PORT=3001 bun --hot demo/index.tsx",
+    "lint": "biome format ./{src,demo} --fix",
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
+    "build:demo": "bun build ./demo/index.html --outdir=demo-dist --sourcemap --target=browser --minify --define:process.env.NODE_ENV='\"production\"' --env='BUN_PUBLIC_*'",
+    "start": "NODE_ENV=production bun demo/index.tsx",
+    "prepublishOnly": "bun run build"
+  },
+  "peerDependencies": {
+    "@deck.gl/core": "^9.0.0",
+    "@deck.gl/layers": "^9.0.0",
+    "geolib": "^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "@deck.gl/react": {
+      "optional": true
+    }
+  },
+  "optionalPeerDependencies": {
+    "@deck.gl/react": "^9.0.0",
+    "react": "^18.0.0 || ^19.0.0"
   },
   "dependencies": {
+    "debug": "^4.4.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.12",
     "@deck.gl/core": "^9.1.14",
     "@deck.gl/layers": "^9.1.14",
+    "@deck.gl/mapbox": "^9.3.0",
     "@deck.gl/react": "^9.1.14",
-    "debug": "^4.4.1",
+    "@microsoft/api-documenter": "^7.30.0",
+    "@microsoft/api-extractor": "^7.58.2",
+    "@types/bun": "latest",
+    "@types/debug": "^4.1.12",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "deck.gl": "^9.1.14",
     "geolib": "^3.3.4",
     "mapbox-gl": "^3.14.0",
     "maplibre-gl": "^5.7.0",
     "react": "^19",
     "react-dom": "^19",
-    "react-map-gl": "^8.0.4"
-  },
-  "devDependencies": {
-    "@types/bun": "latest",
-    "@types/debug": "^4.1.12",
-    "@types/react": "^19",
-    "@types/react-dom": "^19"
+    "react-map-gl": "^8.0.4",
+    "tsdown": "^0.21.8",
+    "typescript": "^6.0.2"
   }
 }

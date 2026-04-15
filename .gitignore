@@ -32,3 +32,10 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Finder (MacOS) folder config
 .DS_Store
+demo-dist
+
+
+# for the moment while i stabalise the api
+etc/
+temp
+docs/

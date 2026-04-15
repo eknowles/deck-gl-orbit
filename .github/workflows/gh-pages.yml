@@ -21,13 +21,13 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Build project
-        run: bun run build
+      - name: Build demo
+        run: bun run build:demo
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: demo-dist
 
   deploy:
     needs: build-and-deploy
