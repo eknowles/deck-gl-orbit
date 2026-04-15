@@ -2,7 +2,7 @@ import type { PickingInfo } from "@deck.gl/core";
 import type { DistanceValue, Point } from "../../types";
 import { DistanceUnit } from "../../types";
 import { calculateDistance } from "../../utils/geo-utils";
-import { ModeEventEmitter, type GeometryMode, type ModeEventMap } from "../Mode";
+import { type GeometryMode, ModeEventEmitter, type ModeEventMap } from "../Mode";
 
 /**
  * @alpha

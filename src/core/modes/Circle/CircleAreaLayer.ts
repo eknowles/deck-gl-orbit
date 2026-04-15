@@ -1,10 +1,10 @@
 import type { CompositeLayerProps } from "@deck.gl/core";
 import { CompositeLayer } from "@deck.gl/core";
-import { ScatterplotLayer, PolygonLayer } from "@deck.gl/layers";
-import { COLORS, asDeckGLColor } from "../../constants/colors";
-import { OrbitLayerType, getLayerId } from "../../constants/layers";
-import type { CircleArea } from "./CircleMode";
+import { PolygonLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { asDeckGLColor, COLORS } from "../../constants/colors";
+import { getLayerId, OrbitLayerType } from "../../constants/layers";
 import { buildCircleLonLatRing } from "../../utils/geo-utils";
+import type { CircleArea } from "./CircleMode";
 
 /**
  * @alpha

@@ -1,8 +1,8 @@
 import type { CompositeLayerProps, Layer } from "@deck.gl/core";
 import { CompositeLayer } from "@deck.gl/core";
 import { PolygonLayer } from "@deck.gl/layers";
-import { COLORS, asDeckGLColor } from "../../constants/colors";
-import { OrbitLayerType, getLayerId } from "../../constants/layers";
+import { asDeckGLColor, COLORS } from "../../constants/colors";
+import { getLayerId, OrbitLayerType } from "../../constants/layers";
 import type { OrbitAreaAlignmentEnum, Point } from "../../types";
 import { ALIGNMENT_QUADRANTS } from "../../utils/alignment-utils";
 import { calculateBearing, calculateDestinationPoint, normalizeAngle } from "../../utils/geo-utils";

@@ -1,14 +1,14 @@
 import type { PickingInfo } from "@deck.gl/core";
-import { CircleMode as CircleModeImpl, type CircleArea, type CircleMode } from "../modes/Circle";
+import { type CircleArea, type CircleMode, CircleMode as CircleModeImpl } from "../modes/Circle";
 import {
-  CorridorMode as CorridorModeImpl,
-  type CorridorMode,
   type CorridorArea,
+  type CorridorMode,
+  CorridorMode as CorridorModeImpl,
 } from "../modes/Corridor";
 import {
-  OrbitAreaMode as OrbitAreaModeImpl,
-  type OrbitAreaMode,
   type OrbitArea,
+  type OrbitAreaMode,
+  OrbitAreaMode as OrbitAreaModeImpl,
 } from "../modes/OrbitArea";
 import { DistanceUnit } from "../types";
 

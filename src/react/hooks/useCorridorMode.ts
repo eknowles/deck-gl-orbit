@@ -1,6 +1,6 @@
 import type { PickingInfo } from "@deck.gl/core";
 import { useCallback, useRef, useState } from "react";
-import { CorridorMode, type CorridorArea } from "../../core/modes/Corridor/CorridorMode";
+import { type CorridorArea, CorridorMode } from "../../core/modes/Corridor/CorridorMode";
 import { DistanceUnit } from "../../core/types";
 
 interface UseCorridorModeResult {

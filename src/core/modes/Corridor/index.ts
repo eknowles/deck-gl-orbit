@@ -1,5 +1,5 @@
-export { CorridorMode, type CorridorArea } from "./CorridorMode";
-export { default as CorridorAreaLayer } from "./CorridorAreaLayer";
-export { default as CorridorModeLayer } from "./CorridorModeLayer";
 export type { CorridorAreaLayerProps } from "./CorridorAreaLayer";
+export { default as CorridorAreaLayer } from "./CorridorAreaLayer";
+export { type CorridorArea, CorridorMode } from "./CorridorMode";
 export type { CorridorModeLayerProps } from "./CorridorModeLayer";
+export { default as CorridorModeLayer } from "./CorridorModeLayer";

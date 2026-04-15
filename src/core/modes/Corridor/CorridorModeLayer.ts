@@ -1,8 +1,9 @@
 import type { CompositeLayerProps, Layer } from "@deck.gl/core";
 import { CompositeLayer } from "@deck.gl/core";
 import { LineLayer, PolygonLayer, ScatterplotLayer } from "@deck.gl/layers";
-import { COLORS, asDeckGLColor } from "../../constants/colors";
-import { OrbitLayerType, getLayerId } from "../../constants/layers";
+import { asDeckGLColor, COLORS } from "../../constants/colors";
+import { getLayerId, OrbitLayerType } from "../../constants/layers";
+import ToolInfoPanel from "../../layers/ToolInfoPanel";
 import type { Point } from "../../types";
 import { DISTANCE_UNIT_LABELS } from "../../types";
 import {
@@ -12,7 +13,6 @@ import {
   generateCorridorAreaPolygon,
 } from "../../utils/geo-utils";
 import type { CorridorMode } from "./CorridorMode";
-import ToolInfoPanel from "../../layers/ToolInfoPanel";
 
 /**
  * @alpha

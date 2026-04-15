@@ -1,6 +1,6 @@
 import type { PickingInfo } from "@deck.gl/core";
 import { useCallback, useRef, useState } from "react";
-import { OrbitAreaMode, type OrbitArea } from "../../core/modes/OrbitArea";
+import { type OrbitArea, OrbitAreaMode } from "../../core/modes/OrbitArea";
 import { DistanceUnit } from "../../core/types";
 
 interface UseOrbitAreaModeResult {

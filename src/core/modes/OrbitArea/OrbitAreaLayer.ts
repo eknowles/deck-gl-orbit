@@ -1,8 +1,8 @@
 import type { CompositeLayerProps } from "@deck.gl/core";
 import { CompositeLayer } from "@deck.gl/core";
 import { PolygonLayer, ScatterplotLayer } from "@deck.gl/layers";
-import { COLORS, asDeckGLColor } from "../../constants/colors";
-import { OrbitLayerType, getLayerId } from "../../constants/layers";
+import { asDeckGLColor, COLORS } from "../../constants/colors";
+import { getLayerId, OrbitLayerType } from "../../constants/layers";
 import type { Point } from "../../types";
 import { generateOrbitAreaPolygon } from "../../utils/geo-utils";
 import type { OrbitArea } from "./OrbitAreaMode";

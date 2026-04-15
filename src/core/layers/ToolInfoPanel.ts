@@ -1,7 +1,7 @@
 import type { CompositeLayerProps } from "@deck.gl/core";
 import { CompositeLayer } from "@deck.gl/core";
 import { TextLayer } from "@deck.gl/layers";
-import { FONT_FAMILY, asDeckGLColor } from "../constants/colors";
+import { asDeckGLColor, FONT_FAMILY } from "../constants/colors";
 import ToolInfoBackgroundLayer from "./ToolInfoBackgroundLayer";
 
 export interface ToolInfoRow {

@@ -15,17 +15,17 @@ import {
 
 // core
 import {
-  OrbitAreaLayer,
-  CircleAreaLayer,
-  CorridorAreaLayer,
-  createDebug,
-  type OrbitArea,
   type CircleArea,
-  type CorridorArea,
-  DistanceUnit,
-  OrbitAreaModeLayer,
+  CircleAreaLayer,
   CircleModeLayer,
+  type CorridorArea,
+  CorridorAreaLayer,
   CorridorModeLayer,
+  createDebug,
+  DistanceUnit,
+  type OrbitArea,
+  OrbitAreaLayer,
+  OrbitAreaModeLayer,
 } from "../../../src/core.ts";
 
 // react

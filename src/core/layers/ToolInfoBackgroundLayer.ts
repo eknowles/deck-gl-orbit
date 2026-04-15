@@ -1,6 +1,6 @@
+import type { CompositeLayerProps, Layer } from "@deck.gl/core";
 import { CompositeLayer } from "@deck.gl/core";
 import { TextLayer } from "@deck.gl/layers";
-import type { CompositeLayerProps, Layer } from "@deck.gl/core";
 import { asDeckGLColor } from "../constants/colors";
 
 // Props interface for the background layer

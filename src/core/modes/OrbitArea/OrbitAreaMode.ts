@@ -1,9 +1,9 @@
 import type { PickingInfo } from "@deck.gl/core";
 import type { Point } from "../../types";
 import { DistanceUnit, OrbitAreaAlignmentEnum } from "../../types";
-import { calculateDistance } from "../../utils/geo-utils";
 import { determineAlignmentFromMousePosition } from "../../utils/alignment-utils";
-import { ModeEventEmitter, type GeometryMode, type ModeEventMap } from "../Mode";
+import { calculateDistance } from "../../utils/geo-utils";
+import { type GeometryMode, ModeEventEmitter, type ModeEventMap } from "../Mode";
 
 /**
  * @alpha

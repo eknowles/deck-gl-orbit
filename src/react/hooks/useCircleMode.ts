@@ -1,6 +1,6 @@
 import type { PickingInfo } from "@deck.gl/core";
 import { useCallback, useRef, useState } from "react";
-import { CircleMode, type CircleArea } from "@/core/index.ts";
+import { type CircleArea, CircleMode } from "@/core/index.ts";
 
 interface UseCircleModeResult {
   mode: CircleMode | null;

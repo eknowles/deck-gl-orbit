@@ -1,20 +1,20 @@
 import type { CompositeLayerProps, Layer } from "@deck.gl/core";
 import { CompositeLayer } from "@deck.gl/core";
 import { LineLayer, PolygonLayer, ScatterplotLayer } from "@deck.gl/layers";
-import { COLORS, asDeckGLColor } from "../../constants/colors";
-import { OrbitLayerType, getLayerId } from "../../constants/layers";
+import { asDeckGLColor, COLORS } from "../../constants/colors";
+import { getLayerId, OrbitLayerType } from "../../constants/layers";
+import ToolInfoPanel from "../../layers/ToolInfoPanel";
 import type { Point } from "../../types";
 import { DISTANCE_UNIT_LABELS, OrbitAreaAlignmentEnum } from "../../types";
+import { determineAlignmentFromMousePosition } from "../../utils/alignment-utils";
 import {
   calculateBearing,
   calculateDistance,
   convertDistance,
   generateOrbitAreaPolygon,
 } from "../../utils/geo-utils";
-import { determineAlignmentFromMousePosition } from "../../utils/alignment-utils";
-import type { OrbitAreaMode } from "./OrbitAreaMode";
 import AlignmentDebugShaderLayer from "./AlignmentDebugShaderLayer";
-import ToolInfoPanel from "../../layers/ToolInfoPanel";
+import type { OrbitAreaMode } from "./OrbitAreaMode";
 
 /**
  * @alpha

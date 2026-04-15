@@ -1,7 +1,7 @@
 import type { OrbitAreaAlignmentEnum, Point } from "../types";
 import { OrbitAreaAlignmentEnum as Align } from "../types";
-import { calculateBearing, normalizeAngle } from "./geo-utils";
 import { createDebug } from "./debug";
+import { calculateBearing, normalizeAngle } from "./geo-utils";
 
 const debug = createDebug("alignment");
 
