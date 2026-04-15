@@ -5,50 +5,39 @@ import { asDeckGLColor, COLORS } from "../../constants/colors";
 import { getLayerId, OrbitLayerType } from "../../constants/layers";
 import ToolInfoPanel from "../../layers/ToolInfoPanel";
 import type { Point } from "../../types";
-import { DISTANCE_UNIT_LABELS, OrbitAreaAlignmentEnum } from "../../types";
-import { determineAlignmentFromMousePosition } from "../../utils/alignment-utils";
+import { DISTANCE_UNIT_LABELS } from "../../types";
 import {
   calculateBearing,
   calculateDistance,
   convertDistance,
-  generateOrbitAreaPolygon,
+  generateCorridorAreaPolygon,
 } from "../../utils/geo-utils";
-import AlignmentDebugShaderLayer from "./AlignmentDebugShaderLayer";
-import type { OrbitAreaMode } from "./OrbitAreaMode";
+import type { CorridorMode } from "./CorridorMode";
 
 /**
  * @alpha
  */
-export interface OrbitAreaModeLayerProps extends CompositeLayerProps {
-  mode: OrbitAreaMode | null;
-  /** When true, draws bearing-relative quadrant wedges at the second point (width step). */
-  debug?: boolean;
+export interface CorridorCreateLayerProps extends CompositeLayerProps {
+  mode: CorridorMode | null;
 }
 
-const defaultProps = {
-  debug: false,
-};
+const defaultProps = {};
 
 /**
- * Simplified layer that renders OrbitAreaMode state
- * Mode handles all logic, layer just visualizes
  * @alpha
  */
-export default class OrbitAreaModeLayer extends CompositeLayer<OrbitAreaModeLayerProps> {
-  static override layerName = "OrbitAreaModeLayer";
+export default class CorridorCreateLayer extends CompositeLayer<CorridorCreateLayerProps> {
+  static override layerName = "CorridorCreateLayer";
   static override defaultProps = defaultProps;
 
   override renderLayers(): Layer[] {
-    const { mode, debug } = this.props;
-
+    const { mode } = this.props;
     if (!mode) return [];
 
     const state = mode.getState();
     const { firstPoint, secondPoint, mousePosition, distanceUnit } = state;
-
     const layers: Layer[] = [];
 
-    // First point marker
     if (firstPoint) {
       layers.push(
         new ScatterplotLayer({
@@ -63,7 +52,6 @@ export default class OrbitAreaModeLayer extends CompositeLayer<OrbitAreaModeLaye
       );
     }
 
-    // Second point marker
     if (secondPoint) {
       layers.push(
         new ScatterplotLayer({
@@ -78,7 +66,6 @@ export default class OrbitAreaModeLayer extends CompositeLayer<OrbitAreaModeLaye
       );
     }
 
-    // Line from first to second point (during second point selection)
     if (firstPoint && mousePosition && !secondPoint) {
       const distance = calculateDistance(firstPoint, mousePosition);
       const bearing = calculateBearing(firstPoint, mousePosition);
@@ -117,36 +104,11 @@ export default class OrbitAreaModeLayer extends CompositeLayer<OrbitAreaModeLaye
       );
     }
 
-    // Preview polygon (during width selection)
     if (firstPoint && secondPoint && mousePosition) {
       const radius = calculateDistance(secondPoint, mousePosition);
       const width = radius * 2;
       const convertedWidth = convertDistance(width, distanceUnit);
       const widthText = `${convertedWidth.toFixed(2)} ${DISTANCE_UNIT_LABELS[distanceUnit]}`;
-
-      const alignment = determineAlignmentFromMousePosition(firstPoint, secondPoint, mousePosition);
-
-      const alignmentText =
-        alignment === OrbitAreaAlignmentEnum.LEFT
-          ? "LEFT"
-          : alignment === OrbitAreaAlignmentEnum.RIGHT
-            ? "RIGHT"
-            : "CENTRE";
-
-      const polygonPoints = generateOrbitAreaPolygon(firstPoint, secondPoint, width, alignment);
-
-      // Debug under axis / preview so orbit stroke and width line read on top.
-      if (debug) {
-        const debugLayer = new AlignmentDebugShaderLayer({
-          id: getLayerId(this.props.id, OrbitLayerType.DEBUG_QUADRANTS, "shader"),
-          firstPoint,
-          secondPoint,
-          radiusMeters: radius,
-          currentAlignment: alignment,
-          visible: true,
-        });
-        layers.push(...debugLayer.renderLayers());
-      }
 
       layers.push(
         new LineLayer({
@@ -182,6 +144,7 @@ export default class OrbitAreaModeLayer extends CompositeLayer<OrbitAreaModeLaye
         }),
       );
 
+      const polygonPoints = generateCorridorAreaPolygon([firstPoint, secondPoint], width);
       layers.push(
         new PolygonLayer({
           id: getLayerId(this.props.id, OrbitLayerType.PREVIEW_POLYGON, "area"),
@@ -197,14 +160,10 @@ export default class OrbitAreaModeLayer extends CompositeLayer<OrbitAreaModeLaye
         }),
       );
 
-      // Tool info
       layers.push(
         new ToolInfoPanel({
           id: `${this.props.id}-width-tool`,
-          rows: [
-            { key: "Alignment", value: alignmentText },
-            { key: "Width", value: widthText },
-          ],
+          rows: [{ key: "Width", value: widthText }],
           position: [mousePosition.longitude, mousePosition.latitude],
           textColor: asDeckGLColor(COLORS.DEBUG_TEXT_COLOR),
           backgroundColor: asDeckGLColor(COLORS.DEBUG_BACKGROUND),

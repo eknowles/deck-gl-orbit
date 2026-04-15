@@ -1,5 +1,5 @@
-export type { CircleAreaLayerProps } from "./CircleAreaLayer";
-export { default as CircleAreaLayer } from "./CircleAreaLayer";
+export type { CircleDisplayLayerProps } from "./CircleDisplayLayer";
+export { default as CircleDisplayLayer } from "./CircleDisplayLayer";
 export { type CircleArea, CircleMode } from "./CircleMode";
-export type { CircleModeLayerProps } from "./CircleModeLayer";
-export { default as CircleModeLayer } from "./CircleModeLayer";
+export type { CircleCreateLayerProps } from "./CircleCreateLayer";
+export { default as CircleCreateLayer } from "./CircleCreateLayer";

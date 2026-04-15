@@ -3,18 +3,17 @@ import { CompositeLayer } from "@deck.gl/core";
 import { PolygonLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { asDeckGLColor, COLORS } from "../../constants/colors";
 import { getLayerId, OrbitLayerType } from "../../constants/layers";
-import type { Point } from "../../types";
-import { generateCorridorAreaPolygon } from "../../utils/geo-utils";
-import type { CorridorArea } from "./CorridorMode";
+import { buildCircleLonLatRing } from "../../utils/geo-utils";
+import type { CircleArea } from "./CircleMode";
 
 /**
  * @alpha
  */
-export interface CorridorAreaLayerProps extends CompositeLayerProps {
-  data: CorridorArea[];
-  getFillColor?: (d: CorridorArea) => number[];
-  getLineColor?: (d: CorridorArea) => number[];
-  getLineWidth?: number | ((d: CorridorArea) => number);
+export interface CircleDisplayLayerProps extends CompositeLayerProps {
+  data: CircleArea[];
+  getFillColor?: (d: CircleArea) => number[];
+  getLineColor?: (d: CircleArea) => number[];
+  getLineWidth?: number | ((d: CircleArea) => number);
   filled?: boolean;
   stroked?: boolean;
   pickable?: boolean;
@@ -30,46 +29,53 @@ const defaultProps = {
 };
 
 /**
+ * Layer for displaying completed circles.
  * @alpha
  */
-export default class CorridorAreaLayer extends CompositeLayer<CorridorAreaLayerProps> {
-  static override layerName = "CorridorAreaLayer";
+export default class CircleDisplayLayer extends CompositeLayer<CircleDisplayLayerProps> {
+  static override layerName = "CircleDisplayLayer";
   static override defaultProps = defaultProps;
 
-  override renderLayers() {
+  renderLayers() {
     const { data, getFillColor, getLineColor, getLineWidth, filled, stroked, pickable } =
       this.props;
 
-    const polygons = data.map((corridor) => ({
-      id: corridor.id,
-      polygon: generateCorridorAreaPolygon(corridor.center_line, corridor.width?.meters ?? 0),
-    }));
+    const circles = data.map((circle) => {
+      const { center, radius } = circle;
+      const polygon = buildCircleLonLatRing(center, radius, 72);
+      return {
+        ...circle,
+        polygon,
+      };
+    });
 
     const polygonLayer = new PolygonLayer({
       id: getLayerId(this.props.id, OrbitLayerType.ORBIT_AREA),
-      data: polygons,
-      getPolygon: (d) => d.polygon.map((p: Point) => [p.longitude, p.latitude]),
-      getFillColor: getFillColor as never,
-      getLineColor: getLineColor as never,
+      data: circles,
+      getPolygon: (d) => d.polygon,
+      getFillColor: getFillColor as any,
+      getLineColor: getLineColor as any,
       getLineWidth,
       lineWidthUnits: "pixels",
       filled,
       stroked,
       pickable,
-      parameters: { depthTest: false },
+      parameters: {
+        depthTest: false,
+      },
     });
 
     const pointsLayer = new ScatterplotLayer({
       id: getLayerId(this.props.id, OrbitLayerType.POINTS),
-      data: data.flatMap((corridor) =>
-        corridor.center_line.map((p) => ({ position: [p.longitude, p.latitude] })),
-      ),
-      getPosition: (d) => d.position,
+      data,
+      getPosition: (d) => [d.center.longitude, d.center.latitude],
       getFillColor: asDeckGLColor(COLORS.POINT_COLOR),
       getRadius: 3,
       radiusUnits: "pixels",
-      pickable: false,
-      parameters: { depthTest: false },
+      pickable: true,
+      parameters: {
+        depthTest: false,
+      },
     });
 
     return [polygonLayer, pointsLayer];

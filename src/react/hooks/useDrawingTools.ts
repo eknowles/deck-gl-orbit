@@ -7,6 +7,7 @@ import {
   DrawingToolsController,
   type DrawingToolsControllerOptions,
   type OrbitToolBindings,
+  type RectangleByCentreToolBindings,
 } from "../../core/controllers/DrawingToolsController";
 
 /**
@@ -29,6 +30,7 @@ export interface UseDrawingToolsResult {
     orbit: OrbitToolBindings;
     circle: CircleToolBindings;
     corridor: CorridorToolBindings;
+    rectangleByCentre: RectangleByCentreToolBindings;
   };
 }
 
@@ -42,9 +44,11 @@ export function useDrawingTools(options: UseDrawingToolsOptions = {}) {
   const onOrbitCompleteRef = useRef(options.onOrbitComplete);
   const onCircleCompleteRef = useRef(options.onCircleComplete);
   const onCorridorCompleteRef = useRef(options.onCorridorComplete);
+  const onRectangleByCentreCompleteRef = useRef(options.onRectangleByCentreComplete);
   onOrbitCompleteRef.current = options.onOrbitComplete;
   onCircleCompleteRef.current = options.onCircleComplete;
   onCorridorCompleteRef.current = options.onCorridorComplete;
+  onRectangleByCentreCompleteRef.current = options.onRectangleByCentreComplete;
 
   const controller = useMemo(
     () =>
@@ -58,6 +62,9 @@ export function useDrawingTools(options: UseDrawingToolsOptions = {}) {
         },
         onCorridorComplete: (corridor) => {
           onCorridorCompleteRef.current?.(corridor);
+        },
+        onRectangleByCentreComplete: (rectangle) => {
+          onRectangleByCentreCompleteRef.current?.(rectangle);
         },
       }),
     [options.distanceUnit],

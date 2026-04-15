@@ -11,7 +11,7 @@ import type { CircleMode } from "./CircleMode";
 /**
  * @alpha
  */
-export interface CircleModeLayerProps extends CompositeLayerProps {
+export interface CircleCreateLayerProps extends CompositeLayerProps {
   mode: CircleMode | null;
   distanceUnit?: DistanceUnit;
 }
@@ -21,11 +21,11 @@ const defaultProps = {
 };
 
 /**
- * Layer that renders CircleMode state
+ * Layer that renders `CircleMode` state while creating.
  * @alpha
  */
-export default class CircleModeLayer extends CompositeLayer<CircleModeLayerProps> {
-  static override layerName = "CircleModeLayer";
+export default class CircleCreateLayer extends CompositeLayer<CircleCreateLayerProps> {
+  static override layerName = "CircleCreateLayer";
   static override defaultProps = defaultProps;
 
   override renderLayers(): Layer[] {
@@ -38,7 +38,6 @@ export default class CircleModeLayer extends CompositeLayer<CircleModeLayerProps
 
     const layers: Layer[] = [];
 
-    // Center point marker
     if (center) {
       layers.push(
         new ScatterplotLayer({
@@ -53,9 +52,7 @@ export default class CircleModeLayer extends CompositeLayer<CircleModeLayerProps
       );
     }
 
-    // Preview circle and radius line
     if (center && mousePosition && radius) {
-      // Radius line
       layers.push(
         new LineLayer({
           id: `${this.props.id}-radius-line`,
@@ -75,7 +72,6 @@ export default class CircleModeLayer extends CompositeLayer<CircleModeLayerProps
 
       const circlePolygon = buildCircleLonLatRing(center, radius, 72);
 
-      // Circle preview
       layers.push(
         new PolygonLayer({
           id: `${this.props.id}-circle-preview`,
@@ -91,7 +87,6 @@ export default class CircleModeLayer extends CompositeLayer<CircleModeLayerProps
         }),
       );
 
-      // Tool info
       const convertedRadius = convertDistance(radius, distanceUnit);
       const radiusText = `${convertedRadius.toFixed(2)} ${DISTANCE_UNIT_LABELS[distanceUnit]}`;
 

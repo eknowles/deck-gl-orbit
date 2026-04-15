@@ -16,16 +16,19 @@ import {
 // core
 import {
   type CircleArea,
-  CircleAreaLayer,
-  CircleModeLayer,
+  CircleCreateLayer,
+  CircleDisplayLayer,
   type CorridorArea,
-  CorridorAreaLayer,
-  CorridorModeLayer,
+  CorridorCreateLayer,
+  CorridorDisplayLayer,
   createDebug,
   DistanceUnit,
   type OrbitArea,
-  OrbitAreaLayer,
-  OrbitAreaModeLayer,
+  OrbitAreaCreateLayer,
+  OrbitAreaDisplayLayer,
+  type RectangleByCentre,
+  RectangleByCentreCreateLayer,
+  RectangleByCentreDisplayLayer,
 } from "../../../src/core.ts";
 
 // react
@@ -63,6 +66,7 @@ export const OrbitAreaDemo: React.FC = () => {
   const [orbitAreas, setOrbitAreas] = useState<OrbitArea[]>([]);
   const [circleAreas, setCircleAreas] = useState<CircleArea[]>([]);
   const [corridorAreas, setCorridorAreas] = useState<CorridorArea[]>([]);
+  const [rectangleAreas, setRectangleAreas] = useState<RectangleByCentre[]>([]);
   const [distanceUnit, setDistanceUnit] = useState(DistanceUnit.METERS);
   const [alignmentDebug, setAlignmentDebug] = useState(true);
 
@@ -80,6 +84,10 @@ export const OrbitAreaDemo: React.FC = () => {
       debug("Corridor completed:", corridor);
       setCorridorAreas((prev) => [...prev, corridor]);
     },
+    onRectangleByCentreComplete(rectangle: RectangleByCentre) {
+      debug("Rectangle by centre completed:", rectangle);
+      setRectangleAreas((prev) => [...prev, rectangle]);
+    },
   });
 
   const handleUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -90,6 +98,7 @@ export const OrbitAreaDemo: React.FC = () => {
     setOrbitAreas([]);
     setCircleAreas([]);
     setCorridorAreas([]);
+    setRectangleAreas([]);
   };
 
   debug(
@@ -99,26 +108,33 @@ export const OrbitAreaDemo: React.FC = () => {
     circleAreas.length,
     "Corridor:",
     corridorAreas.length,
+    "RectangleByCentre:",
+    rectangleAreas.length,
   );
 
   // Layers - use updateCounter from hooks for precise change detection
   const layers = [
-    new OrbitAreaLayer({
+    new OrbitAreaDisplayLayer({
       id: "orbit-areas",
       data: orbitAreas,
       pickable: true,
     }),
-    new CircleAreaLayer({
+    new CircleDisplayLayer({
       id: "circle-areas",
       data: circleAreas,
       pickable: true,
     }),
-    new CorridorAreaLayer({
+    new CorridorDisplayLayer({
       id: "corridor-areas",
       data: corridorAreas,
       pickable: true,
     }),
-    new OrbitAreaModeLayer({
+    new RectangleByCentreDisplayLayer({
+      id: "rectangle-by-centre-areas",
+      data: rectangleAreas,
+      pickable: true,
+    }),
+    new OrbitAreaCreateLayer({
       id: "orbit-mode-layer",
       mode: tools.modes.orbit.mode,
       debug: alignmentDebug,
@@ -127,7 +143,7 @@ export const OrbitAreaDemo: React.FC = () => {
         debug: alignmentDebug,
       },
     }),
-    new CircleModeLayer({
+    new CircleCreateLayer({
       id: "circle-mode-layer",
       mode: tools.modes.circle.mode,
       distanceUnit,
@@ -135,27 +151,37 @@ export const OrbitAreaDemo: React.FC = () => {
         mode: tools.modes.circle.updateCounter, // Updates only when mode changes
       },
     }),
-    new CorridorModeLayer({
+    new CorridorCreateLayer({
       id: "corridor-mode-layer",
       mode: tools.modes.corridor.mode,
       updateTriggers: {
         mode: tools.modes.corridor.updateCounter,
       },
     }),
+    new RectangleByCentreCreateLayer({
+      id: "rectangle-by-centre-mode-layer",
+      mode: tools.modes.rectangleByCentre.mode,
+      distanceUnit,
+      updateTriggers: {
+        mode: tools.modes.rectangleByCentre.updateCounter,
+      },
+    }),
   ];
 
   const modeButtons: Array<{
-    id: "orbit" | "circle" | "corridor";
+    id: "orbit" | "circle" | "corridor" | "rectangleByCentre";
     label: string;
   }> = [
     { id: "orbit", label: "Orbit" },
     { id: "circle", label: "Circle" },
     { id: "corridor", label: "Corridor" },
+    { id: "rectangleByCentre", label: "Rectangle" },
   ];
   const stats = [
     { key: "Orbits", value: orbitAreas.length },
     { key: "Circles", value: circleAreas.length },
     { key: "Corridors", value: corridorAreas.length },
+    { key: "Rectangles", value: rectangleAreas.length },
   ];
 
   return (

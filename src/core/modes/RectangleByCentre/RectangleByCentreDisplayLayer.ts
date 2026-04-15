@@ -3,17 +3,18 @@ import { CompositeLayer } from "@deck.gl/core";
 import { PolygonLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { asDeckGLColor, COLORS } from "../../constants/colors";
 import { getLayerId, OrbitLayerType } from "../../constants/layers";
-import { buildCircleLonLatRing } from "../../utils/geo-utils";
-import type { CircleArea } from "./CircleMode";
+import type { Point } from "../../types";
+import { generateRectangleByCentrePolygon } from "../../utils/geo-utils";
+import type { RectangleByCentre } from "./RectangleByCentreMode";
 
 /**
  * @alpha
  */
-export interface CircleAreaLayerProps extends CompositeLayerProps {
-  data: CircleArea[];
-  getFillColor?: (d: CircleArea) => number[];
-  getLineColor?: (d: CircleArea) => number[];
-  getLineWidth?: number | ((d: CircleArea) => number);
+export interface RectangleByCentreDisplayLayerProps extends CompositeLayerProps {
+  data: RectangleByCentre[];
+  getFillColor?: (d: RectangleByCentre) => number[];
+  getLineColor?: (d: RectangleByCentre) => number[];
+  getLineWidth?: number | ((d: RectangleByCentre) => number);
   filled?: boolean;
   stroked?: boolean;
   pickable?: boolean;
@@ -29,56 +30,46 @@ const defaultProps = {
 };
 
 /**
- * Layer for displaying completed circle areas
  * @alpha
  */
-export default class CircleAreaLayer extends CompositeLayer<CircleAreaLayerProps> {
-  static override layerName = "CircleAreaLayer";
+export default class RectangleByCentreDisplayLayer extends CompositeLayer<RectangleByCentreDisplayLayerProps> {
+  static override layerName = "RectangleByCentreDisplayLayer";
   static override defaultProps = defaultProps;
 
-  renderLayers() {
+  override renderLayers() {
     const { data, getFillColor, getLineColor, getLineWidth, filled, stroked, pickable } =
       this.props;
 
-    // Generate circle polygons
-    const circles = data.map((circle) => {
-      const { center, radius } = circle;
-      const polygon = buildCircleLonLatRing(center, radius, 72);
-      return {
-        ...circle,
-        polygon,
-      };
-    });
+    const polygons = data.map((rectangle) => ({
+      id: rectangle.id,
+      polygon: generateRectangleByCentrePolygon(rectangle),
+    }));
 
-    // Circle polygons
     const polygonLayer = new PolygonLayer({
       id: getLayerId(this.props.id, OrbitLayerType.ORBIT_AREA),
-      data: circles,
-      getPolygon: (d) => d.polygon,
-      getFillColor: getFillColor as any,
-      getLineColor: getLineColor as any,
+      data: polygons,
+      getPolygon: (d) => d.polygon.map((p: Point) => [p.longitude, p.latitude]),
+      getFillColor: getFillColor as never,
+      getLineColor: getLineColor as never,
       getLineWidth,
       lineWidthUnits: "pixels",
       filled,
       stroked,
       pickable,
-      parameters: {
-        depthTest: false,
-      },
+      parameters: { depthTest: false },
     });
 
-    // Center points
     const pointsLayer = new ScatterplotLayer({
       id: getLayerId(this.props.id, OrbitLayerType.POINTS),
-      data,
-      getPosition: (d) => [d.center.longitude, d.center.latitude],
+      data: data.map((rectangle) => ({
+        position: [rectangle.centre.longitude, rectangle.centre.latitude],
+      })),
+      getPosition: (d) => d.position,
       getFillColor: asDeckGLColor(COLORS.POINT_COLOR),
       getRadius: 3,
       radiusUnits: "pixels",
-      pickable: true,
-      parameters: {
-        depthTest: false,
-      },
+      pickable: false,
+      parameters: { depthTest: false },
     });
 
     return [polygonLayer, pointsLayer];

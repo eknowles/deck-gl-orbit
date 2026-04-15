@@ -4,7 +4,7 @@ import type { PickingInfo } from "@deck.gl/core";
  * @internal
  */
 export interface ModeEventMap<TFeature> {
-  change: void;
+  change: undefined;
   complete: TFeature;
 }
 

@@ -1,6 +1,7 @@
 import { computeDestinationPoint, getDistance, getGreatCircleBearing } from "geolib";
 import type { DistanceUnit, Point } from "../types";
 import { DISTANCE_UNIT_CONVERSIONS, OrbitAreaAlignmentEnum } from "../types";
+import type { RectangleByCentre } from "../modes/RectangleByCentre/RectangleByCentreMode";
 
 /**
  * @internal
@@ -161,4 +162,25 @@ export function generateCorridorAreaPolygon(centerLine: Point[], widthMeters: nu
 
   // Rectangular corridor (flat ends): left edge forward, then right edge back.
   return [startLeft, endLeft, endRight, startRight, startLeft];
+}
+
+/**
+ * Rectangle polygon from centre + two side lengths + side1 bearing.
+ * @internal
+ */
+export function generateRectangleByCentrePolygon(rectangle: RectangleByCentre): Point[] {
+  const halfSide1 = rectangle.length_side_1.meters / 2;
+  const halfSide2 = rectangle.length_side_2.meters / 2;
+  const bearingSide1 = rectangle.bearing_side_1.degrees;
+  const perpendicularBearing = bearingSide1 + 90;
+
+  const forward = calculateDestinationPoint(rectangle.centre, bearingSide1, halfSide1);
+  const backward = calculateDestinationPoint(rectangle.centre, bearingSide1 + 180, halfSide1);
+
+  const corner1 = calculateDestinationPoint(forward, perpendicularBearing, halfSide2);
+  const corner2 = calculateDestinationPoint(forward, perpendicularBearing + 180, halfSide2);
+  const corner3 = calculateDestinationPoint(backward, perpendicularBearing + 180, halfSide2);
+  const corner4 = calculateDestinationPoint(backward, perpendicularBearing, halfSide2);
+
+  return [corner1, corner2, corner3, corner4, corner1];
 }

@@ -8,25 +8,26 @@ export {
   DrawingToolsController,
   type DrawingToolsControllerOptions,
   type OrbitToolBindings,
+  type RectangleByCentreToolBindings,
 } from "./controllers/DrawingToolsController";
 export {
-  type CircleAreaLayerProps,
-  default as CircleAreaLayer,
-} from "./modes/Circle/CircleAreaLayer";
+  type CircleDisplayLayerProps,
+  default as CircleDisplayLayer,
+} from "./modes/Circle/CircleDisplayLayer";
 export { type CircleArea, CircleMode } from "./modes/Circle/CircleMode";
 export {
-  type CircleModeLayerProps,
-  default as CircleModeLayer,
-} from "./modes/Circle/CircleModeLayer";
+  type CircleCreateLayerProps,
+  default as CircleCreateLayer,
+} from "./modes/Circle/CircleCreateLayer";
 export {
-  type CorridorAreaLayerProps,
-  default as CorridorAreaLayer,
-} from "./modes/Corridor/CorridorAreaLayer";
+  type CorridorDisplayLayerProps,
+  default as CorridorDisplayLayer,
+} from "./modes/Corridor/CorridorDisplayLayer";
 export { type CorridorArea, CorridorMode } from "./modes/Corridor/CorridorMode";
 export {
-  type CorridorModeLayerProps,
-  default as CorridorModeLayer,
-} from "./modes/Corridor/CorridorModeLayer";
+  type CorridorCreateLayerProps,
+  default as CorridorCreateLayer,
+} from "./modes/Corridor/CorridorCreateLayer";
 export type { GeometryMode, ModeEventMap } from "./modes/Mode";
 export {
   createMode,
@@ -37,17 +38,29 @@ export {
 } from "./modes/ModeRegistry";
 // Layers (DeckGL only)
 export {
-  default as OrbitAreaLayer,
-  type OrbitAreaLayerProps,
-} from "./modes/OrbitArea/OrbitAreaLayer";
+  default as OrbitAreaDisplayLayer,
+  type OrbitAreaDisplayLayerProps,
+} from "./modes/OrbitArea/OrbitAreaDisplayLayer";
 // Modes (nebula.gl style)
 export { type OrbitArea, OrbitAreaMode } from "./modes/OrbitArea/OrbitAreaMode";
 export {
-  default as OrbitAreaModeLayer,
-  type OrbitAreaModeLayerProps,
-} from "./modes/OrbitArea/OrbitAreaModeLayer";
+  default as OrbitAreaCreateLayer,
+  type OrbitAreaCreateLayerProps,
+} from "./modes/OrbitArea/OrbitAreaCreateLayer";
+export {
+  type RectangleByCentreDisplayLayerProps,
+  default as RectangleByCentreDisplayLayer,
+} from "./modes/RectangleByCentre/RectangleByCentreDisplayLayer";
+export {
+  type RectangleByCentre,
+  RectangleByCentreMode,
+} from "./modes/RectangleByCentre/RectangleByCentreMode";
+export {
+  type RectangleByCentreCreateLayerProps,
+  default as RectangleByCentreCreateLayer,
+} from "./modes/RectangleByCentre/RectangleByCentreCreateLayer";
 // Types
-export type { DeckGLColor, DistanceValue, Point } from "./types";
+export type { AngleValue, DeckGLColor, DistanceValue, Point } from "./types";
 export {
   DISTANCE_UNIT_CONVERSIONS,
   DISTANCE_UNIT_LABELS,
@@ -69,4 +82,5 @@ export {
   calculateDistance,
   convertDistance,
   generateCorridorAreaPolygon,
+  generateRectangleByCentrePolygon,
 } from "./utils/geo-utils";

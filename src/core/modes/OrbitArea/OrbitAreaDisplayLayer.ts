@@ -10,7 +10,7 @@ import type { OrbitArea } from "./OrbitAreaMode";
 /**
  * @alpha
  */
-export interface OrbitAreaLayerProps extends CompositeLayerProps {
+export interface OrbitAreaDisplayLayerProps extends CompositeLayerProps {
   data: OrbitArea[];
   getFillColor?: (d: OrbitArea) => number[];
   getLineColor?: (d: OrbitArea) => number[];
@@ -32,8 +32,8 @@ const defaultProps = {
 /**
  * @alpha
  */
-export default class OrbitAreaLayer extends CompositeLayer<OrbitAreaLayerProps> {
-  static override layerName = "OrbitAreaLayer";
+export default class OrbitAreaDisplayLayer extends CompositeLayer<OrbitAreaDisplayLayerProps> {
+  static override layerName = "OrbitAreaDisplayLayer";
   static override defaultProps = defaultProps;
 
   override renderLayers() {

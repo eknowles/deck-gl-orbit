@@ -30,6 +30,13 @@ export interface DistanceValue {
 /**
  * @beta
  */
+export interface AngleValue {
+  degrees: number;
+}
+
+/**
+ * @beta
+ */
 export enum DistanceUnit {
   METERS = "METERS",
   KILOMETERS = "KILOMETERS",

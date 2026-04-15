@@ -4,6 +4,7 @@ import { CircleMode } from "./Circle/CircleMode";
 import { CorridorMode } from "./Corridor/CorridorMode";
 import type { GeometryMode } from "./Mode";
 import { OrbitAreaMode } from "./OrbitArea/OrbitAreaMode";
+import { RectangleByCentreMode } from "./RectangleByCentre/RectangleByCentreMode";
 
 /**
  * Options passed to `createMode` — mode-specific; unknown keys ignored by each mode.
@@ -65,3 +66,5 @@ registerMode(
       distanceUnit: (opts?.distanceUnit as DistanceUnit | undefined) ?? DistanceUnitEnum.METERS,
     }),
 );
+
+registerMode("rectangleByCentre", () => new RectangleByCentreMode());
