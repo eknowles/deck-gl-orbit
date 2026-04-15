@@ -26,9 +26,6 @@ temp/
 tsconfig.json
 tsconfig.lib.json
 
-# Demo-specific assets
-demo-dist/
-
 docs/
 
 

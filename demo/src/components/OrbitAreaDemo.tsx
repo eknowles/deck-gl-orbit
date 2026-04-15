@@ -7,7 +7,7 @@ import type React from "react";
 import { useState } from "react";
 import {
   FullscreenControl,
-  Map,
+  Map as MapLibreMap,
   NavigationControl,
   ScaleControl,
   useControl,
@@ -160,7 +160,7 @@ export const OrbitAreaDemo: React.FC = () => {
 
   return (
     <div className="demo-root">
-      <Map
+      <MapLibreMap
         initialViewState={INITIAL_VIEW_STATE}
         mapLib={maplibregl}
         mapStyle="https://tiles.openfreemap.org/styles/dark"
@@ -187,7 +187,7 @@ export const OrbitAreaDemo: React.FC = () => {
         <NavigationControl position="top-right" showCompass showZoom />
         <FullscreenControl position="top-right" />
         <ScaleControl position="bottom-right" unit="metric" />
-      </Map>
+      </MapLibreMap>
 
       <div className="demo-toolbar">
         <div className="demo-mode-buttons">
@@ -196,6 +196,7 @@ export const OrbitAreaDemo: React.FC = () => {
             return (
               <button
                 key={button.id}
+                type="button"
                 className={`demo-btn ${isActive ? "active" : "primary"}`}
                 onClick={() => tools.startMode(button.id)}
                 disabled={isActive}
@@ -205,11 +206,11 @@ export const OrbitAreaDemo: React.FC = () => {
             );
           })}
           {tools.isDrawing && (
-            <button className="demo-btn danger" onClick={tools.cancelDrawing}>
+            <button type="button" className="demo-btn danger" onClick={tools.cancelDrawing}>
               Cancel
             </button>
           )}
-          <button className="demo-btn clear" onClick={handleClear}>
+          <button type="button" className="demo-btn clear" onClick={handleClear}>
             Clear
           </button>
         </div>

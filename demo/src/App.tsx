@@ -1,4 +1,5 @@
 import { OrbitAreaDemo } from "./components/OrbitAreaDemo";
+// @ts-expect-error
 import "./index.css";
 
 export function App() {
