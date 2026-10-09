@@ -1,8 +1,10 @@
 import type { DeckProps } from "@deck.gl/core";
 import { MapboxOverlay } from "@deck.gl/mapbox";
-import maplibregl from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
 // @ts-expect-error
 import "maplibre-gl/dist/maplibre-gl.css";
+// @ts-expect-error
+import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs" with { type: "file" };
 import type React from "react";
 import { useState } from "react";
 import {
@@ -33,6 +35,9 @@ import {
 
 // react
 import { useDrawingTools } from "../../../src/react.ts";
+
+// maplibre-gl 6 finds its worker next to its own module URL, which bundling breaks.
+maplibregl.setWorkerUrl(maplibreWorkerUrl);
 
 const debug = createDebug("orbit-area-demo");
 
