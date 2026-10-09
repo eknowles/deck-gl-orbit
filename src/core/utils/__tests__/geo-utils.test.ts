@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { Point } from "../../types";
+import { OrbitAreaAlignmentEnum } from "../../types";
+import { determineAlignmentFromMousePosition } from "../alignment-utils";
 import {
   calculateBearing,
   calculateCrossTrackDistance,
@@ -7,6 +9,7 @@ import {
   calculateDistance,
   calculateFinalBearing,
   generateCorridorAreaPolygon,
+  generateOrbitAreaPolygon,
   generateRectangleByCentrePolygon,
 } from "../geo-utils";
 
@@ -112,5 +115,64 @@ describe("generateRectangleByCentrePolygon", () => {
       bearing_side_1: { degrees: rect.bearing_side_1.degrees + 180 },
     });
     for (const v of a) expect(nearestVertex(v, b)).toBeLessThan(1);
+  });
+});
+
+describe("generateOrbitAreaPolygon", () => {
+  const width = 200 * NM;
+
+  test("CENTRE is invariant under reversal of the axis (Scotland ↔ St John's, 200 nm)", () => {
+    const forward = generateOrbitAreaPolygon(
+      SCOTLAND,
+      ST_JOHNS,
+      width,
+      OrbitAreaAlignmentEnum.CENTRE,
+    );
+    const reversed = generateOrbitAreaPolygon(
+      ST_JOHNS,
+      SCOTLAND,
+      width,
+      OrbitAreaAlignmentEnum.CENTRE,
+    );
+    expect(forward.length).toBe(reversed.length);
+    for (const v of forward) expect(nearestVertex(v, reversed)).toBeLessThan(1);
+  });
+
+  test("LEFT on the reversed axis matches RIGHT on the forward axis", () => {
+    const right = generateOrbitAreaPolygon(SCOTLAND, ST_JOHNS, width, OrbitAreaAlignmentEnum.RIGHT);
+    const left = generateOrbitAreaPolygon(ST_JOHNS, SCOTLAND, width, OrbitAreaAlignmentEnum.LEFT);
+    for (const v of right) expect(nearestVertex(v, left)).toBeLessThan(1);
+  });
+
+  test("LEFT and RIGHT keep both axis endpoints on the polygon edge", () => {
+    for (const alignment of [OrbitAreaAlignmentEnum.LEFT, OrbitAreaAlignmentEnum.RIGHT]) {
+      const ring = generateOrbitAreaPolygon(SCOTLAND, ST_JOHNS, width, alignment);
+      expect(nearestVertex(SCOTLAND, ring)).toBeLessThan(1);
+      expect(nearestVertex(ST_JOHNS, ring)).toBeLessThan(1);
+    }
+  });
+
+  test("the far cap is centred on the arrival course", () => {
+    const ring = generateOrbitAreaPolygon(SCOTLAND, ST_JOHNS, width, OrbitAreaAlignmentEnum.CENTRE);
+    const tip = calculateDestinationPoint(
+      ST_JOHNS,
+      calculateFinalBearing(SCOTLAND, ST_JOHNS),
+      width / 2,
+    );
+    expect(nearestVertex(tip, ring)).toBeLessThan(1);
+  });
+});
+
+describe("determineAlignmentFromMousePosition", () => {
+  test("measures quadrants against the arrival course at the second point", () => {
+    // 60° right of the arrival course, but only ~21° right of the departure course.
+    const mouse = calculateDestinationPoint(
+      ST_JOHNS,
+      calculateFinalBearing(SCOTLAND, ST_JOHNS) + 60,
+      50_000,
+    );
+    expect(determineAlignmentFromMousePosition(SCOTLAND, ST_JOHNS, mouse)).toBe(
+      OrbitAreaAlignmentEnum.RIGHT,
+    );
   });
 });

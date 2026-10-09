@@ -1,7 +1,7 @@
 import type { OrbitAreaAlignmentEnum, Point } from "../types";
 import { OrbitAreaAlignmentEnum as Align } from "../types";
 import { createDebug } from "./debug";
-import { calculateBearing, normalizeAngle } from "./geo-utils";
+import { calculateBearing, calculateFinalBearing, normalizeAngle } from "./geo-utils";
 
 const debug = createDebug("alignment");
 
@@ -93,7 +93,8 @@ export function determineAlignmentFromMousePosition(
   secondPoint: Point,
   mousePoint: Point,
 ): OrbitAreaAlignmentEnum {
-  const mainBearing = calculateBearing(firstPoint, secondPoint);
+  // Quadrants sit at `secondPoint`, so measure against the arrival course there.
+  const mainBearing = calculateFinalBearing(firstPoint, secondPoint);
   const mouseBearing = calculateBearing(secondPoint, mousePoint);
   const relativeBearing = normalizeAngle(mouseBearing - mainBearing);
   debug("alignment: main=%s mouseRel=%s", mainBearing.toFixed(1), relativeBearing.toFixed(1));
