@@ -74,8 +74,35 @@ export function buildCircleLonLatRing(
 }
 
 /**
- * Racetrack (orbit) polygon: straight section between offset axis endpoints + semicircular caps.
- * Uses great-circle math via geolib.
+ * Offset `point` abeam of `course` by a signed distance (positive = right of track).
+ * Returns the offset point and the course carried across to it: the abeam great circle
+ * meets the track at a right angle, so the local course at the offset point is 90° off
+ * the abeam direction measured there, not the course at `point`.
+ * @internal
+ */
+function offsetAbeam(
+  point: Point,
+  course: number,
+  offsetMeters: number,
+): { point: Point; course: number } {
+  if (offsetMeters === 0) return { point, course };
+  const side = offsetMeters > 0 ? 90 : -90;
+  const offsetPoint = calculateDestinationPoint(
+    point,
+    normalizeAngle(course + side),
+    Math.abs(offsetMeters),
+  );
+  const outward = calculateFinalBearing(point, offsetPoint);
+  return { point: offsetPoint, course: normalizeAngle(outward - side) };
+}
+
+/**
+ * Racetrack (orbit) polygon: two parallel edges along the axis + semicircular caps.
+ *
+ * As for the corridor, every offset is taken perpendicular to the LOCAL course of the
+ * great-circle axis. Reusing the departure bearing at `secondPoint` shifts the LEFT/RIGHT
+ * centreline and turns the far cap off-axis, because the course rotates along the track.
+ * The edges are sampled so they follow the true parallel curves.
  * @internal
  */
 export function generateOrbitAreaPolygon(
@@ -83,51 +110,52 @@ export function generateOrbitAreaPolygon(
   secondPoint: Point,
   width: number,
   alignment: OrbitAreaAlignmentEnum,
+  segments: number = 32,
 ): Point[] {
-  const bearing = calculateBearing(firstPoint, secondPoint);
   const radius = width / 2;
+  const n = Math.max(1, Math.floor(segments));
+  const capSegments = 20;
 
-  let centerline: [Point, Point] = [firstPoint, secondPoint];
+  // Signed offset of the racetrack centreline from the axis (positive = right).
+  const offset =
+    alignment === OrbitAreaAlignmentEnum.LEFT
+      ? -radius
+      : alignment === OrbitAreaAlignmentEnum.RIGHT
+        ? radius
+        : 0;
 
-  if (alignment === OrbitAreaAlignmentEnum.LEFT) {
-    const leftBearing = normalizeAngle(bearing - 90);
-    centerline = [
-      calculateDestinationPoint(firstPoint, leftBearing, radius),
-      calculateDestinationPoint(secondPoint, leftBearing, radius),
-    ];
-  } else if (alignment === OrbitAreaAlignmentEnum.RIGHT) {
-    const rightBearing = normalizeAngle(bearing + 90);
-    centerline = [
-      calculateDestinationPoint(firstPoint, rightBearing, radius),
-      calculateDestinationPoint(secondPoint, rightBearing, radius),
-    ];
+  const centreline: { point: Point; course: number }[] = [];
+  for (let i = 0; i <= n; i++) {
+    const p = interpolateGreatCircle(firstPoint, secondPoint, i / n);
+    const course =
+      i === 0
+        ? calculateBearing(firstPoint, secondPoint)
+        : i === n
+          ? calculateFinalBearing(firstPoint, secondPoint)
+          : calculateBearing(p, secondPoint);
+    centreline.push(offsetAbeam(p, course, offset));
   }
 
   const polygonPoints: Point[] = [];
-  const segments = 20;
+  const cap = ({ point, course }: { point: Point; course: number }, fromRel: number) => {
+    // Half-turn clockwise around `point`, starting `fromRel` degrees off the local course.
+    for (let i = 0; i <= capSegments; i++) {
+      const angle = normalizeAngle(course + fromRel + (i * 180) / capSegments);
+      polygonPoints.push(calculateDestinationPoint(point, angle, radius));
+    }
+  };
 
-  // Cap at first centerline endpoint: from +90° to -90° of axis (clockwise along perimeter)
-  let startAngle = normalizeAngle(bearing + 90);
-  let endAngle = normalizeAngle(bearing - 90);
-  if (startAngle > endAngle) {
-    endAngle += 360;
+  // Cap at the first end (right → back → left), left edge forward,
+  // cap at the second end (left → front → right), right edge back.
+  cap(centreline[0]!, 90);
+  for (let i = 1; i < n; i++) {
+    const { point, course } = centreline[i]!;
+    polygonPoints.push(calculateDestinationPoint(point, normalizeAngle(course - 90), radius));
   }
-  let angleStep = (endAngle - startAngle) / segments;
-  for (let i = 0; i <= segments; i++) {
-    const angle = normalizeAngle(startAngle + i * angleStep);
-    polygonPoints.push(calculateDestinationPoint(centerline[0], angle, radius));
-  }
-
-  // Cap at second centerline endpoint
-  startAngle = normalizeAngle(bearing - 90);
-  endAngle = normalizeAngle(bearing + 90);
-  if (startAngle > endAngle) {
-    endAngle += 360;
-  }
-  angleStep = (endAngle - startAngle) / segments;
-  for (let i = 0; i <= segments; i++) {
-    const angle = normalizeAngle(startAngle + i * angleStep);
-    polygonPoints.push(calculateDestinationPoint(centerline[1], angle, radius));
+  cap(centreline[n]!, -90);
+  for (let i = n - 1; i > 0; i--) {
+    const { point, course } = centreline[i]!;
+    polygonPoints.push(calculateDestinationPoint(point, normalizeAngle(course + 90), radius));
   }
 
   const first = polygonPoints[0];

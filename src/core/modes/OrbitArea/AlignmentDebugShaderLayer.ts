@@ -5,7 +5,11 @@ import { asDeckGLColor, COLORS } from "../../constants/colors";
 import { getLayerId, OrbitLayerType } from "../../constants/layers";
 import type { OrbitAreaAlignmentEnum, Point } from "../../types";
 import { ALIGNMENT_QUADRANTS } from "../../utils/alignment-utils";
-import { calculateBearing, calculateDestinationPoint, normalizeAngle } from "../../utils/geo-utils";
+import {
+  calculateDestinationPoint,
+  calculateFinalBearing,
+  normalizeAngle,
+} from "../../utils/geo-utils";
 
 /**
  * @internal
@@ -36,7 +40,8 @@ export default class AlignmentDebugShaderLayer extends CompositeLayer<AlignmentD
     const { firstPoint, secondPoint, radiusMeters, currentAlignment, visible } = this.props;
     if (visible === false || radiusMeters <= 0) return [];
 
-    const axisBearing = calculateBearing(firstPoint, secondPoint);
+    // Wedges sit at `secondPoint`, so orient them by the arrival course there.
+    const axisBearing = calculateFinalBearing(firstPoint, secondPoint);
     const center = secondPoint;
     const segments = 24;
 
