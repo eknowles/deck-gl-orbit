@@ -8,6 +8,7 @@ import type { Point } from "../../types";
 import { DISTANCE_UNIT_LABELS } from "../../types";
 import {
   calculateBearing,
+  calculateCrossTrackDistance,
   calculateDistance,
   convertDistance,
   generateCorridorAreaPolygon,
@@ -105,7 +106,7 @@ export default class CorridorCreateLayer extends CompositeLayer<CorridorCreateLa
     }
 
     if (firstPoint && secondPoint && mousePosition) {
-      const radius = calculateDistance(secondPoint, mousePosition);
+      const radius = calculateCrossTrackDistance(firstPoint, secondPoint, mousePosition);
       const width = radius * 2;
       const convertedWidth = convertDistance(width, distanceUnit);
       const widthText = `${convertedWidth.toFixed(2)} ${DISTANCE_UNIT_LABELS[distanceUnit]}`;

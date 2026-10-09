@@ -1,6 +1,11 @@
 import type { PickingInfo } from "@deck.gl/core";
 import type { AngleValue, DistanceValue, Point } from "../../types";
-import { calculateBearing, calculateDistance, normalizeAngle } from "../../utils/geo-utils";
+import {
+  calculateBearing,
+  calculateCrossTrackDistance,
+  calculateDistance,
+  normalizeAngle,
+} from "../../utils/geo-utils";
 import { type GeometryMode, ModeEventEmitter, type ModeEventMap } from "../Mode";
 
 /**
@@ -147,10 +152,7 @@ export class RectangleByCentreMode
     if (halfSide1 <= 0) return undefined;
 
     const bearingSide1 = normalizeAngle(calculateBearing(this.center, this.side1Point));
-    const centerToSide2Distance = calculateDistance(this.center, side2Point);
-    const bearingToSide2 = normalizeAngle(calculateBearing(this.center, side2Point));
-    const relativeAngleRad = ((bearingToSide2 - bearingSide1) * Math.PI) / 180;
-    const halfSide2 = Math.abs(centerToSide2Distance * Math.sin(relativeAngleRad));
+    const halfSide2 = calculateCrossTrackDistance(this.center, this.side1Point, side2Point);
 
     return {
       centre: this.center,
