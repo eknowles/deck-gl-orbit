@@ -8,8 +8,9 @@ const server = serve({
   },
 
   development: process.env.NODE_ENV !== "production" && {
-    // Enable browser hot reloading in development
-    hmr: true,
+    // HMR is off: Bun's HMR module loader leaves deck.gl's circular shaderlib
+    // imports undefined on first load, so ScatterplotLayer fails to initialise.
+    hmr: false,
 
     // Echo console logs from the browser to the server
     console: true,
