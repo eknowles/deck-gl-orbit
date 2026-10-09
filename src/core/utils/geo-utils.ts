@@ -142,45 +142,148 @@ export function generateOrbitAreaPolygon(
 }
 
 /**
- * Corridor polygon from centerline + width.
- * Reuses orbit center-aligned capsule for two-point centerlines.
+ * Bearing of the great circle from `from` to `to`, measured at `to` (the arrival course).
+ * Differs from the departure bearing whenever the track crosses meridians at latitude.
  * @internal
  */
-export function generateCorridorAreaPolygon(centerLine: Point[], widthMeters: number): Point[] {
+export function calculateFinalBearing(from: Point, to: Point): number {
+  return normalizeAngle(calculateBearing(to, from) + 180);
+}
+
+/**
+ * Point at fraction `t` (0..1) along the great circle from `from` to `to`.
+ * @internal
+ */
+export function interpolateGreatCircle(from: Point, to: Point, t: number): Point {
+  if (t <= 0) return { latitude: from.latitude, longitude: from.longitude };
+  if (t >= 1) return { latitude: to.latitude, longitude: to.longitude };
+  const toRad = Math.PI / 180;
+  const lat1 = from.latitude * toRad;
+  const lon1 = from.longitude * toRad;
+  const lat2 = to.latitude * toRad;
+  const lon2 = to.longitude * toRad;
+  const ax = Math.cos(lat1) * Math.cos(lon1);
+  const ay = Math.cos(lat1) * Math.sin(lon1);
+  const az = Math.sin(lat1);
+  const bx = Math.cos(lat2) * Math.cos(lon2);
+  const by = Math.cos(lat2) * Math.sin(lon2);
+  const bz = Math.sin(lat2);
+  const omega = Math.acos(Math.min(1, Math.max(-1, ax * bx + ay * by + az * bz)));
+  if (omega < 1e-12) return { latitude: from.latitude, longitude: from.longitude };
+  const s1 = Math.sin((1 - t) * omega) / Math.sin(omega);
+  const s2 = Math.sin(t * omega) / Math.sin(omega);
+  const x = ax * s1 + bx * s2;
+  const y = ay * s1 + by * s2;
+  const z = az * s1 + bz * s2;
+  return {
+    latitude: Math.atan2(z, Math.sqrt(x * x + y * y)) / toRad,
+    longitude: Math.atan2(y, x) / toRad,
+  };
+}
+
+/**
+ * Perpendicular (cross-track) distance in meters from `point` to the great circle
+ * through `start` and `end`, measured against the course at `start`.
+ * Used for width capture so that a click along the axis extension yields zero width.
+ * @internal
+ */
+export function calculateCrossTrackDistance(start: Point, end: Point, point: Point): number {
+  const course = calculateBearing(start, end);
+  const bearingToPoint = calculateBearing(start, point);
+  const distance = calculateDistance(start, point);
+  const relativeAngleRad = ((bearingToPoint - course) * Math.PI) / 180;
+  return Math.abs(distance * Math.sin(relativeAngleRad));
+}
+
+/**
+ * Corridor polygon from centerline + width.
+ *
+ * Each sample along the great-circle centerline is offset perpendicular to the LOCAL
+ * course at that sample. The course of a great circle rotates as it crosses meridians,
+ * so reusing the departure bearing at the far end places that end's corners off-axis
+ * and beyond the endpoint. Sampling the edges also makes the long edges follow the
+ * true parallel curves rather than a straight line in the map projection.
+ * The result is invariant under reversal of the centerline.
+ * @internal
+ */
+export function generateCorridorAreaPolygon(
+  centerLine: Point[],
+  widthMeters: number,
+  segments: number = 32,
+): Point[] {
   if (centerLine.length < 2 || widthMeters <= 0) return [];
   const start = centerLine[0]!;
   const end = centerLine[centerLine.length - 1]!;
   const halfWidth = widthMeters / 2;
-  const bearing = calculateBearing(start, end);
-  const leftBearing = normalizeAngle(bearing - 90);
-  const rightBearing = normalizeAngle(bearing + 90);
+  const n = Math.max(1, Math.floor(segments));
 
-  const startLeft = calculateDestinationPoint(start, leftBearing, halfWidth);
-  const startRight = calculateDestinationPoint(start, rightBearing, halfWidth);
-  const endLeft = calculateDestinationPoint(end, leftBearing, halfWidth);
-  const endRight = calculateDestinationPoint(end, rightBearing, halfWidth);
+  const left: Point[] = [];
+  const right: Point[] = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const p = interpolateGreatCircle(start, end, t);
+    // Local course: departure bearing at the start, arrival bearing at the end,
+    // and the bearing towards the end elsewhere.
+    const course =
+      i === 0
+        ? calculateBearing(start, end)
+        : i === n
+          ? calculateFinalBearing(start, end)
+          : calculateBearing(p, end);
+    left.push(calculateDestinationPoint(p, normalizeAngle(course - 90), halfWidth));
+    right.push(calculateDestinationPoint(p, normalizeAngle(course + 90), halfWidth));
+  }
 
-  // Rectangular corridor (flat ends): left edge forward, then right edge back.
-  return [startLeft, endLeft, endRight, startRight, startLeft];
+  // Left edge forward, then right edge back, closed.
+  const ring = [...left, ...right.reverse()];
+  ring.push({ latitude: ring[0]!.latitude, longitude: ring[0]!.longitude });
+  return ring;
 }
 
 /**
  * Rectangle polygon from centre + two side lengths + side1 bearing.
+ *
+ * The rectangle is defined on the local tangent plane at `centre` (azimuthal
+ * equidistant frame): every vertex is reached by ONE geodesic step from the centre,
+ * using the polar form of its planar offset. Chaining two geodesic steps with a
+ * fixed perpendicular bearing produced a trapezoid, because the perpendicular to
+ * side1 rotates between the centre and the ends of the axis.
+ * Long edges are sampled so they follow the plane's straight lines on the sphere.
  * @internal
  */
-export function generateRectangleByCentrePolygon(rectangle: RectangleByCentre): Point[] {
+export function generateRectangleByCentrePolygon(
+  rectangle: RectangleByCentre,
+  segmentsPerEdge: number = 8,
+): Point[] {
   const halfSide1 = rectangle.length_side_1.meters / 2;
   const halfSide2 = rectangle.length_side_2.meters / 2;
   const bearingSide1 = rectangle.bearing_side_1.degrees;
-  const perpendicularBearing = bearingSide1 + 90;
+  const n = Math.max(1, Math.floor(segmentsPerEdge));
 
-  const forward = calculateDestinationPoint(rectangle.centre, bearingSide1, halfSide1);
-  const backward = calculateDestinationPoint(rectangle.centre, bearingSide1 + 180, halfSide1);
+  // Planar corners (along side1, across side2), clockwise.
+  const corners: [number, number][] = [
+    [halfSide1, halfSide2],
+    [halfSide1, -halfSide2],
+    [-halfSide1, -halfSide2],
+    [-halfSide1, halfSide2],
+  ];
 
-  const corner1 = calculateDestinationPoint(forward, perpendicularBearing, halfSide2);
-  const corner2 = calculateDestinationPoint(forward, perpendicularBearing + 180, halfSide2);
-  const corner3 = calculateDestinationPoint(backward, perpendicularBearing + 180, halfSide2);
-  const corner4 = calculateDestinationPoint(backward, perpendicularBearing, halfSide2);
+  const toGeo = (along: number, across: number): Point => {
+    const distance = Math.hypot(along, across);
+    if (distance === 0) return { ...rectangle.centre };
+    const bearing = normalizeAngle(bearingSide1 + (Math.atan2(across, along) * 180) / Math.PI);
+    return calculateDestinationPoint(rectangle.centre, bearing, distance);
+  };
 
-  return [corner1, corner2, corner3, corner4, corner1];
+  const ring: Point[] = [];
+  for (let c = 0; c < 4; c++) {
+    const [a0, x0] = corners[c]!;
+    const [a1, x1] = corners[(c + 1) % 4]!;
+    for (let i = 0; i < n; i++) {
+      const t = i / n;
+      ring.push(toGeo(a0 + (a1 - a0) * t, x0 + (x1 - x0) * t));
+    }
+  }
+  ring.push({ latitude: ring[0]!.latitude, longitude: ring[0]!.longitude });
+  return ring;
 }

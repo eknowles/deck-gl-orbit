@@ -1,7 +1,7 @@
 import type { PickingInfo } from "@deck.gl/core";
 import type { DistanceValue, Point } from "../../types";
 import { DistanceUnit } from "../../types";
-import { calculateDistance } from "../../utils/geo-utils";
+import { calculateCrossTrackDistance } from "../../utils/geo-utils";
 import { type GeometryMode, ModeEventEmitter, type ModeEventMap } from "../Mode";
 
 /**
@@ -68,7 +68,8 @@ export class CorridorMode
       return true;
     }
 
-    const widthMeters = calculateDistance(this.secondPoint, point) * 2;
+    // Perpendicular distance from the centreline, so a click along the axis gives zero width.
+    const widthMeters = calculateCrossTrackDistance(this.firstPoint, this.secondPoint, point) * 2;
     const corridor: CorridorArea = {
       center_line: [this.firstPoint, this.secondPoint],
       width: { meters: widthMeters },
